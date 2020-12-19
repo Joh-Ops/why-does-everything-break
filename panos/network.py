@@ -38,15 +38,26 @@ def is_cracked(address, port):
 
 
 def status(address, port):
-    try:
-        response = Connection(address, port).status()
-        if not response:
-            return None
+    queue = Queue()
 
+    def add_to_queue(status):
+        queue.put(status)
+
+    try:
+        Connection(address, port).status(handle_status=add_to_queue)
+        while queue.empty():
+            sleep(0.05)
+
+        response = queue.get()
         status = response
-        status['players'] = [player['name'] for player in response['players']['sample']]
+
         status['max_players'] = response['players']['max']
         status['online'] = response['players']['online']
+        if response['players'].get('sample'):
+            status['players'] = [player['name'] for player in response['players']['sample']]
+        else:
+            status['players'] = []
+
         return status
 
     except:

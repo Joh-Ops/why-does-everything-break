@@ -27,7 +27,9 @@ def doom_bot(address, port):
         connection.connect()
 
         while queue.empty():
-            sleep(1)
+            sleep(0.05)
+        if queue.get() == 'disconnected':
+            break
 
 
 def impending_doom(address, port, max=5):

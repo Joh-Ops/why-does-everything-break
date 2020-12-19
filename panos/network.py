@@ -27,7 +27,6 @@ def is_cracked(address, port):
 
     connection.register_exception_handler(network_exception_handler)
 
-
     connection.connect()
     while result.empty():
         sleep(0.05)
@@ -62,5 +61,6 @@ def status(address, port):
         return status
 
     except:
+        traceback.print_exc()
         return None
 

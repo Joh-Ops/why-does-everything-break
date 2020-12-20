@@ -34,7 +34,7 @@ async def is_cracked(address, port, timeout=15):
             loop.run_in_executor(None, connection.connect),
             timeout=timeout
         )
-    except (ConnectionRefusedError, TimeoutError, asyncio.TimeoutError):
+    except (ConnectionRefusedError, ConnectionAbortedError, TimeoutError, asyncio.TimeoutError):
         return False
 
     try:

@@ -48,12 +48,13 @@ async def is_cracked(address, port, timeout=15):
     return result
 
 
-async def status(address, port, timeout=20):
+async def status(address, port, timeout=15):
+    #print(f'{address}:{port} started')
     loop = asyncio.get_running_loop()
-    result = asyncio.Queue()
+    queue = asyncio.Queue()
 
     def add_to_queue(obj):
-        asyncio.run_coroutine_threadsafe(result.put(obj), loop)
+        asyncio.run_coroutine_threadsafe(queue.put(obj), loop)
 
     try:
         await asyncio.wait_for(
@@ -61,20 +62,24 @@ async def status(address, port, timeout=20):
             timeout=timeout
         )
     except (ConnectionRefusedError, TimeoutError, asyncio.exceptions.TimeoutError):
+        #print(f'{address}:{port} finished')
         return None
     try:
-        response = await asyncio.wait_for(result.get(), timeout=timeout)
+        response = await asyncio.wait_for(queue.get(), timeout=timeout)
     except asyncio.TimeoutError:
+        #print(f'{address}:{port} finished')
         return None
 
     if not response:
+        #print(f'{address}:{port} finished')
         return None
 
-    status = response
-    status['max_players'] = response['players']['max']
-    status['online'] = response['players']['online']
+    result = response
+    result['max_players'] = response['players']['max']
+    result['online'] = response['players']['online']
     if response['players'].get('sample'):
-        status['players'] = [player['name'] for player in response['players']['sample']]
+        result['players'] = [player['name'] for player in response['players']['sample']]
     else:
-        status['players'] = []
-    return status
+        result['players'] = []
+    #print(f'{address}:{port} finished')
+    return result

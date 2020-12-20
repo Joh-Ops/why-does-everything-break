@@ -1,57 +1,41 @@
-import json
-import threading
-from time import sleep
-from queue import Queue
-from random import choice, random
+import asyncio
 import traceback
+from time import sleep
+from random import choice
 
 from panos import network
 from minecraft.networking.connection import Connection
 from minecraft.networking.packets import Packet, clientbound, serverbound
 
 
+#TODO: fix mysterious bug that breaks impending doom when I have 3 or more of them sending messages at the same time
+
 def random_caps(string):
     return ''.join(choice((str.upper, str.lower))(c) for c in string)
 
 
-def doom_bot(address, port):
-    queue = Queue()
-    packet = serverbound.play.ChatPacket()
-    packet.message = 'IMPENDING DOOM'
+class DoomConnection:
+    def __init__(self, address, port):
+        self.port = port
+        self.address = address
 
-    def handle_evicted(packet):
-        queue.put('evicted')
+        self._connection = Connection(self.address, self.port, username=random_caps('impending doom'))
+        self._connection.register_packet_listener(self.handle_evicted, clientbound.play.DisconnectPacket, early=True)
+        self._connection.register_exception_handler(self.handle_error)
+        self._connection.connect()
 
-    def handle_disconnected(e, info):
-        queue.put('disconnected')
-        traceback.print_exception(*info)
+    def handle_evicted(self, packet):
+        self._connection = Connection(self.address, self.port, username=random_caps('impending doom'))
+        self._connection.register_packet_listener(self.handle_evicted, clientbound.play.DisconnectPacket, early=True)
+        self._connection.register_exception_handler(self.handle_error)
+        self._connection.connect()
 
-    def handle_chat(packet):
-        sender = json.loads(packet.json_data)['with'][0]['text']
-        if sender[0] == ' ':
-            queue.put('disconnected')
-
-    while True:
-        connection = Connection(address, port, username=random_caps('impending doom'))
-        connection.register_packet_listener(handle_evicted, clientbound.play.DisconnectPacket, early=True)
-        connection.register_packet_listener(handle_chat, clientbound.play.ChatMessagePacket)
-        connection.register_exception_handler(handle_disconnected)
-        connection.connect()
-
-        while queue.empty():
-            connection.write_packet(packet)
-            sleep(0.5 + random()/4)
-
-        if queue.get() == 'disconnected':
-            break
+    def __getattr__(self, instance, owner=None):
+        return getattr(self._connection, instance)
 
 
-def impending_doom(address, port, max=3):
-    status = network.status(address, port)
-    available_slots = status['max_players'] - status['online']
-    if max > available_slots:
-        max = available_slots
-
-    for j in range(max):
-        threading.Thread(target=doom_bot, args=(address, port)).start()
-
+async def impending_doom(address, port, max=3, time=10):
+    connections = [DoomConnection(address, port) for j in range(max)]
+    await asyncio.sleep(time)
+    for connection in connections:
+        connection.disconnect(immediate=True)

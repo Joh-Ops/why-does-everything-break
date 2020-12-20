@@ -55,6 +55,9 @@ async def impending_doom(address, port, max=5, time=10):
     # Windup time that's needed for no apparent reason
     await asyncio.sleep(2)
 
-    await asyncio.wait_for(send_doom_packets(connections), timeout=time)
+    try:
+        await asyncio.wait_for(send_doom_packets(connections), timeout=time)
+    except asyncio.exceptions.TimeoutError:
+        pass
     for connection in connections:
         connection.disconnect(immediate=True)

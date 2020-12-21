@@ -49,7 +49,6 @@ async def is_cracked(address, port, timeout=15):
 
 
 async def status(address, port, timeout=15):
-    #print(f'{address}:{port} started')
     loop = asyncio.get_running_loop()
     queue = asyncio.Queue()
 
@@ -62,16 +61,13 @@ async def status(address, port, timeout=15):
             timeout=timeout
         )
     except (ConnectionRefusedError, TimeoutError, asyncio.exceptions.TimeoutError):
-        #print(f'{address}:{port} finished')
         return None
     try:
         response = await asyncio.wait_for(queue.get(), timeout=timeout)
     except asyncio.TimeoutError:
-        #print(f'{address}:{port} finished')
         return None
 
     if not response:
-        #print(f'{address}:{port} finished')
         return None
 
     result = response
@@ -81,5 +77,4 @@ async def status(address, port, timeout=15):
         result['players'] = [player['name'] for player in response['players']['sample']]
     else:
         result['players'] = []
-    #print(f'{address}:{port} finished')
     return result

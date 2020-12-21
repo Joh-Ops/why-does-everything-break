@@ -48,12 +48,12 @@ async def send_doom_packets(connections):
             if connection.ready:
                 connection.write_packet(packet)
                 await asyncio.sleep(1/len(connections))
+            else:
+                await asyncio.sleep(0.05)
 
 
 async def impending_doom(address, port, max=5, time=10):
     connections = [DoomConnection(address, port) for j in range(max)]
-    # Windup time that's needed for no apparent reason
-    await asyncio.sleep(2)
 
     try:
         await asyncio.wait_for(send_doom_packets(connections), timeout=time)

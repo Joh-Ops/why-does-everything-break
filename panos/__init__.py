@@ -1,1 +1,1 @@
-from panos import *
+from .panos import *

@@ -1,35 +1,75 @@
+import aiohttp
 import asyncio
+import argparse
 import cProfile
 from time import time
-from random import choice
 
+import panos
 import config
-from panos import network
-from minecraft.networking.connection import Connection
+
+loop = asyncio.ProactorEventLoop()
+asyncio.set_event_loop(loop)
 
 
-def chunks(lst, n):
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
+def print_results(results):
+    print('-----OUTPUT-----')
+    for result in results:
+        print(result)
+    print('----------------')
 
+def dump_results(results, outfile):
+    with open(outfile, 'w+', encoding='utf-8') as f:
+        print(f'Outputting results into {f.name}...')
+        f.writelines([str(result) + '\n' for result in results])        
+    print(f'Finished outputting results into {outfile}')
 
-async def scan(addresses):
-    statuses = []
-    for chunk in chunks(addresses, 10000):
-        print(f'Scanning {chunk[0][0]}:{chunk[0][1]} to {chunk[-1][0]}:{chunk[-1][1]}')
-        start = time()
-        statuses += [status for status in
-                     await asyncio.gather(*[network.status(ip, port) for ip, port in chunk], return_exceptions=True)
-                     if status]
-        print(time() - start)
-        print(statuses)
-    return statuses
+def get_args():
+    parser = argparse.ArgumentParser(description='Scans given iprange for minecraft servers on port 25565.')
+    parser.add_argument('option', nargs='*', 
+                        help='mode used for scanning: [random, specific, full]')
+    parser.add_argument('-f', '--filtering', default=None,
+                        help='options for filtering.')
+    parser.add_argument('-o', '--outfile', default=None,
+                        help='options for filtering.')
+    parser.add_argument('-v', '--verbose', type=bool, nargs='?', const=False, default=True)
+    parser.add_argument('-s', '--silent', type=bool, nargs='?', const=True, default=False)
+    args = parser.parse_args()
+    return args
 
+async def main():
+    args = get_args()
 
-ip = '194.125.251.223'
-server_location = ('194.125.251.223', 53840)
-addresses = [(ip, port) for port in config.PORT_RANGE]
-assert server_location in addresses
+    option_dict = {'random' : panos.scan_random_aternos,
+                   'specific' : panos.scan_specific_aternos,
+                   'full' : panos.scan_full_aternos,
+                    }
+    start = time()
+    if len(args.option) == 2:
+        option, num = args.option 
+        results = await option_dict[option](num, filtering=args.filtering, silent=args.verbose)
+    elif args.option[0] != 'specific':
+        option = args.option[0]
+        num = 1
+        results = await option_dict[option](filtering=args.filtering, silent=args.verbose)
+    else:
+        raise ValueError('Did not specify ip')
+    end = time()
+        
+    if args.outfile:
+        dump_results(results, args.outfile)
+    if not args.silent:
+        print_results(results)
+        if option == 'random':
+            if int(num) != 1:
+                print(f'Scanned {num} ip ranges.')
+            else:
+                print('Scanned 1 ip range.')
+        elif option == 'full':
+            print(f'Scanned {len(config.IPS)} ip ranges.')
+                  
+        print(f'{len(results)} results.')
+        print(f'Took {time()-start} seconds')
+        
 
-asyncio.run(scan([server_location]), debug=True)
-asyncio.run(scan(addresses), debug=True)
+if __name__ == '__main__':
+    loop.run_until_complete(main())

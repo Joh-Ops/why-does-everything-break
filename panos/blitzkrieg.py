@@ -2,7 +2,7 @@ import asyncio
 from random import choice
 
 from minecraft.networking.connection import Connection
-from minecraft.networking.packets import Packet, clientbound, serverbound
+from minecraft.networking.packets import clientbound, serverbound
 
 
 def random_caps(string):

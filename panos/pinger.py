@@ -1,9 +1,12 @@
 import aiohttp
 import asyncio
+import warnings
 
 import config
 from panos.protocol import ping
 from panos.filters import filter_result
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 def chunks(lst, n):
@@ -31,6 +34,7 @@ async def ping_servers(hosts, silent=False, filtering=None, session=None):
             for hostchunk in chunks(hosts, config.CHUNK_SIZE):
                 results += await asyncio.gather(
                     *[is_minecraft(host, session, silent=silent, filtering=filtering) for host in hostchunk])
+
     else:
         for hostchunk in chunks(hosts, config.CHUNK_SIZE):
             results += await asyncio.gather(

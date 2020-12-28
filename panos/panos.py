@@ -1,15 +1,18 @@
 import aiohttp
 from time import time
-from itertools import chain
+from random import choice
 
 import config
 from panos.pinger import ping_servers
-from panos.hosts_generation import generate_hosts, randomize_hosts
+from panos.hosts_generation import generate_hosts
 
 
 async def scan_random_aternos(times=1, silent=False, filtering=None):
-    print('Starting random scan...')
-    hosts = list(chain(*[randomize_hosts(config.IPS, config.PORT_RANGE) for j in range(int(times))]))
+    ips = [choice(config.IPS) for j in range(int(times))]
+    print(f'Scanning {", ".join(ips)}')
+    hosts = []
+    for ip in ips:
+        hosts += generate_hosts(ip, config.PORT_RANGE)
     results = await ping_servers(hosts, silent=silent, filtering=filtering)
     if not results:
         return ['No results.']
@@ -23,23 +26,12 @@ async def scan_full_aternos(chunks=1, silent=False, filtering=None):
         ips = enumerate(config.IPS)
         
         for counter, ip in ips:
-            old_counter = counter
             hosts = generate_hosts(ip, config.PORT_RANGE)
-            try:
-                for j in range(int(chunks)-1):
-                    counter, ip = next(ips)
-                    hosts += generate_hosts(ip, config.PORT_RANGE)
-            except StopIteration:
-                pass
-            
             start = time()
             results = await ping_servers(hosts, silent=silent, filtering=filtering, session=session)
             output += results
 
-            if old_counter == counter:
-                print(f'Scanned {counter+1} out of {len(config.IPS)} with {len(results)} results in {time()-start} seconds')
-            else:
-                print(f'Scanned {old_counter+1}-{counter+1} out of {len(config.IPS)} with {len(results)} results in {time()-start} seconds')
+            print(f'Scanned {counter+1} out of {len(config.IPS)} with {len(results)} results in {time()-start} seconds')
         
     if not output:
         return ['No results.']
@@ -48,7 +40,7 @@ async def scan_full_aternos(chunks=1, silent=False, filtering=None):
 
 async def scan_specific_aternos(ip, silent=False, filtering=None):
     print('Starting specific scan...')
-    hosts = generate_hosts(ip, config.PORTRANGE)
+    hosts = generate_hosts(ip, config.PORT_RANGE)
     results = await ping_servers(hosts, silent=silent, filtering=filtering)
     if not results:
         return ['No results.']

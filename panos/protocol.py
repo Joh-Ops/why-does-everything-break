@@ -1,11 +1,9 @@
-from functools import partial
 import traceback
 import asyncio
 import struct
 import socket
 import base64
 import json
-import sys
 
 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 

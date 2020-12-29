@@ -1,11 +1,9 @@
-import aiohttp
 import asyncio
 import argparse
-import cProfile
 from time import time
 
-import panos
 import config
+import panos
 
 loop = asyncio.ProactorEventLoop()
 asyncio.set_event_loop(loop)
@@ -44,24 +42,23 @@ async def main():
                    'full' : panos.scan_full_aternos,
                     }
     start = time()
-    if len(args.option) == 2:
-        option, num = args.option 
-        results = await option_dict[option](num, filtering=args.filtering, silent=args.verbose)
+    if args.option[0] != 'full' and len(args.option) == 2:
+        option, arg = args.option
+        results = await option_dict[option](arg, filtering=args.filtering, silent=args.verbose)
     elif args.option[0] != 'specific':
         option = args.option[0]
-        num = 1
+        arg = 1
         results = await option_dict[option](filtering=args.filtering, silent=args.verbose)
     else:
         raise ValueError('Did not specify ip')
-    end = time()
         
     if args.outfile:
         dump_results(results, args.outfile)
     if not args.silent:
         print_results(results)
         if option == 'random':
-            if int(num) != 1:
-                print(f'Scanned {num} ip ranges.')
+            if int(arg) != 1:
+                print(f'Scanned {arg} ip ranges.')
             else:
                 print('Scanned 1 ip range.')
         elif option == 'full':

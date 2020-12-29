@@ -19,7 +19,7 @@ async def scan_random_aternos(times=1, silent=False, filtering=None):
     return results
 
 
-async def scan_full_aternos(chunks=1, silent=False, filtering=None):
+async def scan_full_aternos(silent=False, filtering=None):
     print('Starting full scan...')
     output = []
     async with aiohttp.ClientSession() as session:

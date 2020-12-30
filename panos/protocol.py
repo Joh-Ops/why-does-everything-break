@@ -1,9 +1,9 @@
-import traceback
 import asyncio
-import struct
-import socket
 import base64
 import json
+import socket
+import struct
+import traceback
 
 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
@@ -26,6 +26,7 @@ class Server:
     def __str__(self):
         return f"{self.host} - {self.players} - {self.version} - \"{self.description}\""
 
+
 class Players(list):
     def __init__(self, data):
         super().__init__(Player(x) for x in data.get('sample', []))
@@ -35,6 +36,7 @@ class Players(list):
     def __str__(self):
         return f'{self.online}/{self.max}'
 
+
 class Player:
     def __init__(self, data):
         self.id = data['id']
@@ -42,9 +44,11 @@ class Player:
 
     def __str__(self):
         return f'{self.name} | {self.id}'
-        
+
+
 async def ping(host_string):
     loop = asyncio.get_event_loop()
+
     async def read_var_int():
         i = 0
         j = 0
@@ -68,9 +72,9 @@ async def ping(host_string):
         await loop.sock_connect(sock, (ip, port))
 
         host = ip.encode('utf-8')
-        data = b''  
-        data += b'\x00' 
-        data += b'\x04' 
+        data = b''
+        data += b'\x00'
+        data += b'\x04'
         data += struct.pack('>b', len(host)) + host
         data += struct.pack('>H', port)
         data += b'\x01'
@@ -94,9 +98,9 @@ async def ping(host_string):
             data += chunk
 
         return Server(host_string, json.loads(data))
-    
+
     except Exception as e:
-        #print(traceback.format_exc())
+        # print(traceback.format_exc())
         return None
 
     finally:

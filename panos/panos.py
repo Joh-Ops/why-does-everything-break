@@ -19,20 +19,21 @@ async def scan_random_aternos(times=1, silent=False, filtering=None):
     return results
 
 
-async def scan_full_aternos(chunks=1, silent=False, filtering=None):
+async def scan_full_aternos(silent=False, filtering=None):
     print('Starting full scan...')
     output = []
     async with aiohttp.ClientSession() as session:
         ips = enumerate(config.IPS)
-        
+
         for counter, ip in ips:
             hosts = generate_hosts(ip, config.PORT_RANGE)
             start = time()
             results = await ping_servers(hosts, silent=silent, filtering=filtering, session=session)
             output += results
 
-            print(f'Scanned {counter+1} out of {len(config.IPS)} with {len(results)} results in {time()-start} seconds')
-        
+            print(
+                f'Scanned {counter + 1} out of {len(config.IPS)} with {len(results)} results in {time() - start} seconds')
+
     if not output:
         return ['No results.']
     return output

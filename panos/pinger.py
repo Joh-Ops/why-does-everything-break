@@ -1,12 +1,10 @@
 import aiohttp
 import asyncio
-import warnings
 
-import config
 from panos.protocol import ping
 from panos.filters import filter_result
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+import config
 
 
 def chunks(lst, n):

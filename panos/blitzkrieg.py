@@ -66,27 +66,29 @@ async def impending_doom(address, port, max=5, time=10):
 
 
 class CommandConnection:
-    def __init__(self, address, port, username, command):
-        self.command = command
+    def __init__(self, address, port, username, commands):
+        self.commands = commands
         self.username = username
         self._connection = Connection(address, port, username=username)
         self._connection.register_packet_listener(self.handle_login, clientbound.play.JoinGamePacket)
 
     def handle_login(self, packet):
-        chat_packet = serverbound.play.ChatPacket()
-        chat_packet.message = self.command
-        self._connection.write_packet(chat_packet)
-        print(f'{self.username} sent {self.command}')
+        for command in self.commands:
+            chat_packet = serverbound.play.ChatPacket()
+            chat_packet.message = self.command
+            self._connection.write_packet(chat_packet)
+            print(f'{self.username} sent {command}')
 
     def __getattr__(self, instance, owner=None):
         return getattr(self._connection, instance)
 
 
-async def run_command(address, port, command):
+async def run_command(address, port, commands):
     server = await ping(f'{address}:{port}')
     player_names = [player.name for player in server.players if player.name[-1] != ' ']
-    print(player_names)
+    if isinstance(commands, str):
+        commands = [commands]
 
-    connections = [CommandConnection(address, port, name, command) for name in player_names]
+    connections = [CommandConnection(address, port, name, commands) for name in player_names]
     for connection in connections:
         connection.connect()

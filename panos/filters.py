@@ -6,10 +6,11 @@ async def filter_cracked(result, session):
     if any(asyncio.gather(*[get_cracked(player.id, player.name, session) for player in result.players])):
         return result
     else:
-        return None             
+        return None
+
 
 async def filter_premium(result, session):
-    if not any(asyncio.gather(*[get_cracked(player.id, player.name, session) for player in result.players])):
+    if not any(await asyncio.gather(*[get_cracked(player.id, player.name, session) for player in result.players])):
         return result
     else:
         return None             

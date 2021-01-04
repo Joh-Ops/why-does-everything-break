@@ -99,8 +99,11 @@ async def ping(host_string):
 
         return Server(host_string, json.loads(data))
 
+    except (OSError, ValueError, KeyError):
+        return None
+
     except Exception as e:
-        # print(traceback.format_exc())
+        print(traceback.format_exc())
         return None
 
     finally:

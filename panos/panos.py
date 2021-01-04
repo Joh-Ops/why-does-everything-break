@@ -7,19 +7,19 @@ from panos.pinger import ping_servers
 from panos.hosts_generation import generate_hosts
 
 
-async def scan_random_aternos(times=1, silent=False, filtering=None):
+async def scan_random_aternos(times=1, silent=False, verbose=False, filtering=None):
     ips = [choice(config.IPS) for j in range(int(times))]
     print(f'Scanning {", ".join(ips)}')
     hosts = []
     for ip in ips:
         hosts += generate_hosts(ip, config.PORT_RANGE)
-    results = await ping_servers(hosts, silent=silent, filtering=filtering)
+    results = await ping_servers(hosts, silent=silent, verbose=verbose, filtering=filtering)
     if not results:
         return ['No results.']
     return results
 
 
-async def scan_full_aternos(silent=False, filtering=None):
+async def scan_full_aternos(silent=False, verbose=False, filtering=None):
     print('Starting full scan...')
     output = []
     async with aiohttp.ClientSession() as session:
@@ -28,7 +28,7 @@ async def scan_full_aternos(silent=False, filtering=None):
         for counter, ip in ips:
             hosts = generate_hosts(ip, config.PORT_RANGE)
             start = time()
-            results = await ping_servers(hosts, silent=silent, filtering=filtering, session=session)
+            results = await ping_servers(hosts, silent=silent, verbose=verbose, filtering=filtering, session=session)
             output += results
 
             print(
@@ -39,10 +39,10 @@ async def scan_full_aternos(silent=False, filtering=None):
     return output
 
 
-async def scan_specific_aternos(ip, silent=False, filtering=None):
+async def scan_specific_aternos(ip, silent=False, verbose=False, filtering=None):
     print('Starting specific scan...')
     hosts = generate_hosts(ip, config.PORT_RANGE)
-    results = await ping_servers(hosts, silent=silent, filtering=filtering)
+    results = await ping_servers(hosts, silent=silent, verbose=verbose, filtering=filtering)
     if not results:
         return ['No results.']
     return results

